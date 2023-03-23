@@ -1,54 +1,21 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-
-	"github.com/cassiusbessa/micro-service-update-service/entities"
-	"github.com/cassiusbessa/micro-service-update-service/errors"
+	"github.com/cassiusbessa/micro-service-update-service/handlers"
+	"github.com/cassiusbessa/micro-service-update-service/logs"
 	"github.com/cassiusbessa/micro-service-update-service/repositories"
-	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-var _, cancel = repositories.MongoConnection()
-
-func UpdateService(c *gin.Context) {
-	var service entities.Service
-	if err := c.BindJSON(&service); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
-		return
-	}
-
-	if err := service.Validate(); err != nil {
-		fmt.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
-	}
-
-	db := c.Param("company")
-
-	result, err := repositories.UpdateService(db, service.Id.Hex(), service)
-	if err != nil {
-		repositories.SaveError(db, *errors.NewError(http.StatusInternalServerError, "Error Mongo updating service", "UpdateService", err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if !result {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Service updated successfully"})
-
-	defer cancel()
-}
+var file = logs.Init()
 
 func main() {
-	r := gin.Default()
-	r.PUT("/services/:company", UpdateService)
-
+	defer file.Close()
+	r := handlers.Router()
+	repositories.Repo.Ping()
+	r.PUT("/services/:company", handlers.UpdateService)
+	r.StaticFile("/logs", "./logs/logs.log")
 	if err := r.Run(":8080"); err != nil {
-		log.Fatal(err)
+		logrus.Fatalf("Failed to start server: %v", err)
 	}
 }
