@@ -6,20 +6,16 @@ import (
 	"net/http"
 
 	"github.com/cassiusbessa/micro-service-update-service/entities"
+	"github.com/cassiusbessa/micro-service-update-service/errors"
 	"github.com/cassiusbessa/micro-service-update-service/repositories"
 	"github.com/gin-gonic/gin"
 )
-
-type Response struct {
-	Message interface{} `json:"message"`
-}
 
 var _, cancel = repositories.MongoConnection()
 
 func UpdateService(c *gin.Context) {
 	var service entities.Service
 	if err := c.BindJSON(&service); err != nil {
-		fmt.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
@@ -34,6 +30,7 @@ func UpdateService(c *gin.Context) {
 
 	result, err := repositories.UpdateService(db, service.Id.Hex(), service)
 	if err != nil {
+		repositories.SaveError(db, *errors.NewError(http.StatusInternalServerError, "Error Mongo updating service", "UpdateService", err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -49,7 +46,7 @@ func UpdateService(c *gin.Context) {
 
 func main() {
 	r := gin.Default()
-	r.PATCH("/service/:company", UpdateService)
+	r.PUT("/services/:company", UpdateService)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)
