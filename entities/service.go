@@ -6,10 +6,10 @@ import (
 )
 
 type Service struct {
-	Id          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Id          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty" validate:"required"`
 	Name        string             `json:"name,omitempty" bson:"name,omitempty" validate:"gt=0"`
-	MinDuration int                `json:"min_duration,omitempty" bson:"min_duration" validate:"gt=0"`
-	MinPrice    float32            `json:"min_price,omitempty" bson:"min_price" validate:"gte=0"`
+	MinDuration int                `json:"min_duration,omitempty" bson:"min_duration,omitempty" validate:"gt=0"`
+	MinPrice    float32            `json:"min_price,omitempty" bson:"min_price,omitempty" validate:"gte=0"`
 }
 
 type ValidateError struct {
