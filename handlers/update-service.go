@@ -12,7 +12,7 @@ import (
 
 func UpdateService(c *gin.Context) {
 	var service entities.Service
-	db := c.Param("company")
+	db, id := c.Param("company"), c.Param("id")
 	logrus.Warnf("Updating Service on %s", db)
 	if err := c.BindJSON(&service); err != nil {
 		logrus.Errorf("Error decoding Service %v: %v", db, err)
@@ -26,7 +26,7 @@ func UpdateService(c *gin.Context) {
 		return
 	}
 
-	result, err := repositories.UpdateService(db, service.Id.Hex(), service)
+	result, err := repositories.UpdateService(db, id, service)
 	if err != nil {
 		logrus.Errorf("Error Updating Service on %v: %v", db, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

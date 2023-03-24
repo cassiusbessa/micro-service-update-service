@@ -13,12 +13,12 @@ import (
 func UpdateService(db string, id string, service entities.Service) (bool, error) {
 	collection := Repo.Client.Database(db).Collection("company")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
 	mongoId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		cancel()
 		return false, err
 	}
+	service.Id = mongoId
 
 	filter := bson.M{
 		"services._id": mongoId,
